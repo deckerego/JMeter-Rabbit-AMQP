@@ -9,6 +9,7 @@ import org.apache.jorphan.gui.JLabeledTextArea;
 import org.apache.jorphan.gui.JLabeledTextField;
 
 import com.zeroclue.jmeter.protocol.amqp.AMQPPublisher;
+import javax.swing.JCheckBox;
 
 /**
  * AMQP Sampler
@@ -32,6 +33,7 @@ public class AMQPPublisherGui extends AMQPSamplerGui {
     private final FilePanel messageFile = new FilePanel("Filename", ALL_FILES);
     */
     private JLabeledTextArea message = new JLabeledTextArea("Message Content");
+    private JCheckBox confirms = new JCheckBox("Request Publish Confirmation", false);
     private JLabeledTextField messageRoutingKey = new JLabeledTextField("Routing Key");
     private JLabeledTextField messageType = new JLabeledTextField("Message Type");
     private JLabeledTextField replyToQueue = new JLabeledTextField("Reply-To Queue");
@@ -68,6 +70,7 @@ public class AMQPPublisherGui extends AMQPSamplerGui {
         replyToQueue.setText(sampler.getReplyToQueue());
         correlationId.setText(sampler.getCorrelationId());
         message.setText(sampler.getMessage());
+        confirms.setSelected(sampler.confirms());
     }
 
     /**
@@ -96,6 +99,7 @@ public class AMQPPublisherGui extends AMQPSamplerGui {
         sampler.setMessageType(messageType.getText());
         sampler.setReplyToQueue(replyToQueue.getText());
         sampler.setCorrelationId(correlationId.getText());
+        sampler.setConfirms(confirms.isSelected());
     }
 
     @Override
@@ -119,6 +123,7 @@ public class AMQPPublisherGui extends AMQPSamplerGui {
         mainPanel.add(messageType);
         mainPanel.add(replyToQueue);
         mainPanel.add(correlationId);
+        mainPanel.add(confirms);
         mainPanel.add(message);
     }
 
@@ -133,5 +138,6 @@ public class AMQPPublisherGui extends AMQPSamplerGui {
         replyToQueue.setText("");
         correlationId.setText("");
         message.setText("");
+        confirms.setSelected(false);
     }
 }

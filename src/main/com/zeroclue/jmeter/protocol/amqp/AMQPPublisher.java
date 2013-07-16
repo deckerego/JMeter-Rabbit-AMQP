@@ -1,6 +1,7 @@
 package com.zeroclue.jmeter.protocol.amqp;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.ConfirmListener;
 import java.io.IOException;
 
 import org.apache.jmeter.samplers.Entry;
@@ -33,6 +34,7 @@ public class AMQPPublisher extends AMQPSampler implements Interruptible {
     private final static String MESSAGE_TYPE = "AMQPPublisher.MessageType";
     private final static String REPLY_TO_QUEUE = "AMQPPublisher.ReplyToQueue";
     private final static String CORRELATION_ID = "AMQPPublisher.CorrelationId";
+    private final static String CONFIRMS = "AMQPPublisher.Confirms";
 
     private transient Channel channel;
 
@@ -49,9 +51,25 @@ public class AMQPPublisher extends AMQPSampler implements Interruptible {
         result.setSampleLabel(getName());
         result.setSuccessful(false);
         result.setResponseCode("500");
+        
+        ConfirmListener confirmListener = new ConfirmListener() {
+           public void handleAck(long seqNo, boolean multiple) {
+               return; //Do nothing - all is well.
+           }  
+           
+           public void handleNack(long seqNo, boolean multiple) {
+               throw new IllegalStateException("Publish Confirmation was not acknowledged by broker");
+           }
+        };
 
         try {
             initChannel();
+            
+            if(confirms()) {
+                channel.addConfirmListener(confirmListener);
+                channel.confirmSelect();
+            }
+            
         } catch (IOException ex) {
             log.error("Failed to initialize channel", ex);
             return result;
@@ -86,7 +104,6 @@ public class AMQPPublisher extends AMQPSampler implements Interruptible {
 
         return result;
     }
-
 
     private byte[] getMessageBytes() {
         return getMessage().getBytes();
@@ -145,6 +162,25 @@ public class AMQPPublisher extends AMQPSampler implements Interruptible {
 
     public void setCorrelationId(String content) {
         setProperty(CORRELATION_ID, content);
+    }
+
+    /**
+     * @return if publisher confirms should be requested for the sample
+     */
+    public String getConfirms() {
+        return getPropertyAsString(CONFIRMS);
+    }
+
+    public void setConfirms(String content) {
+        setProperty(CONFIRMS, content);
+    }
+
+    public void setConfirms(Boolean value) {
+        setProperty(CONFIRMS, value.toString());
+    }
+
+    public boolean confirms(){
+        return getPropertyAsBoolean(CONFIRMS);
     }
 
     @Override
